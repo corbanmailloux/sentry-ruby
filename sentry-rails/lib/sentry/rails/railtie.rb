@@ -12,43 +12,43 @@ module Sentry
       app.config.middleware.insert_after ActionDispatch::DebugExceptions, Sentry::Rails::RescuedExceptionInterceptor
     end
 
-    # because the extension works by registering the around_perform callcack, it should always be ran
-    # before the application is eager-loaded (before user's jobs register their own callbacks)
-    # See https://github.com/getsentry/sentry-ruby/issues/1249#issuecomment-853871871 for the detail explanation
-    initializer "sentry.extend_active_job", before: :eager_load! do |app|
-      ActiveSupport.on_load(:active_job) do
-        require "sentry/rails/active_job"
-        prepend Sentry::Rails::ActiveJobExtensions
-      end
-    end
+    # # because the extension works by registering the around_perform callcack, it should always be ran
+    # # before the application is eager-loaded (before user's jobs register their own callbacks)
+    # # See https://github.com/getsentry/sentry-ruby/issues/1249#issuecomment-853871871 for the detail explanation
+    # initializer "sentry.extend_active_job", before: :eager_load! do |app|
+    #   ActiveSupport.on_load(:active_job) do
+    #     require "sentry/rails/active_job"
+    #     prepend Sentry::Rails::ActiveJobExtensions
+    #   end
+    # end
 
-    initializer "sentry.extend_action_cable", before: :eager_load! do |app|
-      ActiveSupport.on_load(:action_cable_connection) do
-        require "sentry/rails/action_cable"
-        prepend Sentry::Rails::ActionCableExtensions::Connection
-      end
+    # initializer "sentry.extend_action_cable", before: :eager_load! do |app|
+    #   ActiveSupport.on_load(:action_cable_connection) do
+    #     require "sentry/rails/action_cable"
+    #     prepend Sentry::Rails::ActionCableExtensions::Connection
+    #   end
 
-      ActiveSupport.on_load(:action_cable_channel) do
-        require "sentry/rails/action_cable"
-        include Sentry::Rails::ActionCableExtensions::Channel::Subscriptions
-        prepend Sentry::Rails::ActionCableExtensions::Channel::Actions
-      end
-    end
+    #   ActiveSupport.on_load(:action_cable_channel) do
+    #     require "sentry/rails/action_cable"
+    #     include Sentry::Rails::ActionCableExtensions::Channel::Subscriptions
+    #     prepend Sentry::Rails::ActionCableExtensions::Channel::Actions
+    #   end
+    # end
 
-    config.after_initialize do |app|
-      next unless Sentry.initialized?
+    # config.after_initialize do |app|
+    #   next unless Sentry.initialized?
 
-      configure_project_root
-      configure_trusted_proxies
-      extend_controller_methods if defined?(ActionController)
-      patch_background_worker if defined?(ActiveRecord)
-      override_streaming_reporter if defined?(ActionView)
-      setup_backtrace_cleanup_callback
-      inject_breadcrumbs_logger
-      activate_tracing
+    #   configure_project_root
+    #   configure_trusted_proxies
+    #   extend_controller_methods if defined?(ActionController)
+    #   patch_background_worker if defined?(ActiveRecord)
+    #   override_streaming_reporter if defined?(ActionView)
+    #   setup_backtrace_cleanup_callback
+    #   inject_breadcrumbs_logger
+    #   activate_tracing
 
-      register_error_subscriber(app) if ::Rails.version.to_f >= 7.0 && Sentry.configuration.rails.register_error_subscriber
-    end
+    #   register_error_subscriber(app) if ::Rails.version.to_f >= 7.0 && Sentry.configuration.rails.register_error_subscriber
+    # end
 
     runner do
       next unless Sentry.initialized?
